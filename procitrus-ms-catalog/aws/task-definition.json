@@ -1,0 +1,22 @@
+{
+  "containerDefinitions": [{
+    "image": "820233355588.dkr.ecr.us-east-1.amazonaws.com/%REPO%",
+    "essential": true,
+    "name": "notification",
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/aws/ecs/novoapp-ms-notification-%ENVIRONMENT%",
+        "awslogs-region": "us-east-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "cpu": 0,
+    "memory": 1024,
+    "portMappings": [{
+      "hostPort": 8086,
+      "protocol": "tcp",
+      "containerPort": 80
+    }]
+  }]
+}
