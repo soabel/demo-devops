@@ -34,8 +34,8 @@ if [[ "$(docker images | grep $SERVICE_NAME 2> /dev/null)" != "" ]]; then
 	docker rmi $SERVICE_NAME
 fi
 echo ::Cleaning directory repo
-if [[ "$(ls -a | grep $SERVICE_NAME 2> /dev/null)" != "" ]]; then
-	rm -rf $SERVICE_NAME
+if [[ "$(ls -a | grep $BASE_DIR 2> /dev/null)" != "" ]]; then
+	rm -rf $BASE_DIR
 fi
 
 docker image prune -f
