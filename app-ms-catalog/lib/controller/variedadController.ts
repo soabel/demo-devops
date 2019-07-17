@@ -10,6 +10,8 @@ export class VariedadController {
     public listarVariedad(reqParam: express.Request, resParam: express.Response) {
         let request: ListarVariedadRequest = reqParam.body;
 
+        console.log(request);
+
         clientRequest.post(urlService.variedadListar, {
             json: request.idProducto
             }, (error, res, body) => {
