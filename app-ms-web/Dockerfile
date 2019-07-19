@@ -14,7 +14,7 @@ COPY . ./
 
 RUN npm install
 
-RUN npm run build-qa
+RUN npm run build
 
 FROM nginx:1.15-alpine
 
