@@ -11,6 +11,6 @@ spec:
     spec:
       containers: 
       - name: app-ms-catalog
-        image: app-ms-catalog:v1
+        image: app-ms-catalog:latest
         ports:
         - containerPort: 8081
