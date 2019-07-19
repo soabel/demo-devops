@@ -14,7 +14,5 @@ spec:
         image: app-ms-catalog:latest
         ports:
         - containerPort: 8081
-      volumes:
-        - name: app-ms-catalog-volume
-          secret:
-            secretName: dockersecret
+      imagePullSecrets:
+      - name: dockersecret
