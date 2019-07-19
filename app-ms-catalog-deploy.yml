@@ -14,5 +14,6 @@ spec:
         image: app-ms-catalog:latest
         ports:
         - containerPort: 8081
+      imagePullPolicy: IfNotPresent
       imagePullSecrets:
       - name: dockersecret
