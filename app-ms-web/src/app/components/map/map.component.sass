@@ -1,0 +1,78 @@
+.title-map
+    font-size: 24px
+    margin: 30px 0px
+.map-container
+    margin: 30px 0px
+    min-height: 67px !important
+    position: relative
+    height: 80vh
+    display: flex
+    text-align: center
+    > img
+        width:100%
+    li
+        list-style: none
+        position: absolute
+        cursor: pointer
+        &:nth-child(1)
+            top: 50%
+            left: 25%
+        &:nth-child(2)
+            top:  70%
+            left: 30%
+        &:nth-child(3)
+            top:  80%
+            left: 20%
+        &:nth-child(4)
+            top:  60%
+            left: 40%
+        &:nth-child(5)
+            top:  50%
+            left: 36%
+        > img
+                &:hover
+                        +.personal-seller
+                                opacity: 1
+                                visibility: visible
+.map-bg
+    width: 400px
+    height: 500px
+    display: block
+.personal-seller
+    opacity: 0
+    visibility: hidden
+    background: #fff
+    position: absolute
+    bottom: 100%
+    left: 50%
+    transform: translateX(-50%)
+    display: flex
+    width: 220px
+    justify-content: space-between
+    padding: 10px 
+    box-sizing: border-box
+    flex-wrap: wrap
+    transition: all 0.25s ease
+    button
+        width: 100%
+        margin-top: 10px
+        border: 1px solid #000
+        color: #000
+        height: 40px
+        cursor: pointer
+        background: transparent
+        transition: all 0.25s 
+        &:hover
+                background: #000
+                color: #fff
+    &:hover
+            opacity: 1
+            visibility: visible
+.personal-info
+    span
+        display: block
+        margin: 5px 0px
+    a
+        display: block
+        cursor: pointer
+        transition: all 0.25s ease

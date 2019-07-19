@@ -1,0 +1,68 @@
+<div class="container">
+    <p-breadcrumb class="custom-breadcrumb" [model]="breadcrumb"></p-breadcrumb>
+</div>
+<div class="detail-container">
+    <div class="container flex">
+        <img src='{{ ItemProductsItemsResult.imagen}}'  width="500"  alt="">
+        <div class="product-descrip">
+            <div  class="ui-g-12" >
+                <h3>{{ ItemProductsItemsResult.descripcion }}</h3>
+                <span  style="margin-bottom: 30px" >Contiene</span>
+                <span>1 Vibranza</span>
+                <span>  1 Delineador Gel Tattoo Black </span>
+                <span> 1 Labiar red  </span>
+                <span>  bolsa de regalo</span>
+            </div>
+            <br>
+            <div class="mb-10 ui-g-12">
+                <span class="fs-12" >Precio Normal</span>
+                <h2 class="fs-14 ma-0 " >S/.{{ ItemProductsItemsResult.precio | number: '1.2-4'}}</h2>
+            </div>
+            <div class="ui-g-12 w-250" >
+                <button (click)="showConfirm()" class=" btn-black"pButton type="button" label="Probar"></button>
+            </div>
+        </div>
+    
+    </div>
+
+</div>
+
+<div class="container">
+    <h3 class=" fw-500 uppercase text-center" >Conoce y prueba tu Pack Navideño</h3>
+
+    <div class="items-container">
+        <div *ngFor="let item of items" class=" ui-g">
+            <div class="ui-g-12 text-center"  >
+                <img width="200" src=' ../../assets/Cremas.png' />
+            </div>
+            <div class="mb-0 ui-g-12">
+                <span class="fs-12" >{{  item.brand  }}</span>
+                <h2 class="fs-14 ma-0" >Set Vibranza</h2>
+            </div>
+            <div class="mb-10 ui-g-12">
+                <span class="fs-12" >Precio Normal</span>
+                <h2 class="fs-14 ma-0 " >S/.50</h2>
+            </div>
+            <button (click)="showConfirm()" class="w-170 btn-black ui-g-12"pButton type="button" label="Probar"></button>
+        </div>
+    </div>
+</div>
+
+<p-toast class="custom-form" position="center" key="c" (onClose)="onReject()" [modal]="true" [baseZIndex]="5000">
+    <ng-template let-message pTemplate="message">
+        <div style="text-align: center"  class="ui-g-12" >
+            <h3  class="text-center fs20"   >Hola !</h3>
+            <p  class="fs-12" >Llena esta infomación para que una de nuestras asesoras de  belleza se ponga en contacto  contigo</p>
+        </div>
+        <div style="text-align: center">
+                <input id="input"  placeholder="Nombres y Apellido"  type="text" size="30" pInputText [(ngModel)]="name"> 
+                <input id="input"  placeholder="Telefono"  type="text" size="30" pInputText [(ngModel)]="tel"> 
+                <input id="input"  placeholder="E-mail"  type="text" size="30" pInputText [(ngModel)]="mail"> 
+        </div>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12  text-center">
+                <button  type="button" pButton (click)="succesBtn()" label="Listo" class="ui-button-success"></button>
+            </div>
+        </div>
+    </ng-template>
+</p-toast>

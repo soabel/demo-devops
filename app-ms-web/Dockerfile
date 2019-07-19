@@ -2,13 +2,6 @@ FROM node:10-alpine as builder
 
 # SET ENVIRONMENT VARIABLES
 ENV ENVIRONMENT=prod
-# ENV UrlApiNovoApp="http://10.12.6.81:8084/estimation/api/"
-# ENV UrlApiMongoApp="http://10.12.6.81:8084/datahistory/api/"
-# ENV UrlApiSecurity="http://10.12.6.81:8084/identity/api/"
-
-# ENV UrlApiNovoApp="http://alb-novoapp-dev-1984268684.us-east-1.elb.amazonaws.com:8084/estimation/api/"
-# ENV UrlApiMongoApp="http://alb-novoapp-dev-1984268684.us-east-1.elb.amazonaws.com:8084/datahistory/api/"
-# ENV UrlApiSecurity="http://alb-novoapp-dev-1984268684.us-east-1.elb.amazonaws.com:8084/identity/api/"
 
 RUN apk update && apk add --no-cache \
     git \
