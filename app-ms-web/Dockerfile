@@ -10,7 +10,7 @@ RUN apk update && apk add --no-cache \
 
 WORKDIR /home/node/app
 
-COPY app/ ./
+COPY . ./
 
 RUN npm install
 
