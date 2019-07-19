@@ -11,7 +11,7 @@ spec:
     spec:
       containers: 
       - name: app-ms-catalog
-        image: app-ms-catalog:latest
+        image: soabel/app-ms-catalog:v1
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8081      
