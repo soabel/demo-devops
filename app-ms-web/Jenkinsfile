@@ -1,0 +1,242 @@
+import hudson.model.*
+import hudson.EnvVars
+import groovy.json.JsonSlurperClassic
+import groovy.json.JsonBuilder
+import groovy.json.JsonOutput
+import java.net.URL
+import java.net.URLEncoder
+
+def DEPLOYMENT_OBJECT
+@NonCPS
+def jsonParse(def json) {
+    new groovy.json.JsonSlurperClassic().parseText(json)
+}
+pipeline {
+
+    agent {
+        label 'ec2-linux-spot-slave'
+    }
+
+    environment {
+        IMAGE_NAME = 'novoapp/web'
+        AWS_REGION = 'us-east-1'
+        AWS_ACCOUNT = '820233355588'
+        IMAGE_TAG = getShortCommitId()
+        ENVIRONMENT = getEnvironment()
+    }
+
+    stages {
+        stage('Initialize') {
+            steps {
+                notifyBuildDevOps()
+                notifyBuild()
+            }
+        }
+
+        // stage ('Static Code Analysis') {
+        //     steps {
+        //         script {
+        //             def image = docker.build('novoapp/node-builder', './ci')
+        //             def projectVersion = getShortCommitId()
+        //             def branchName = env.BRANCH_NAME
+        //
+        //             image.inside("-u 0") {
+        //                 withSonarQubeEnv('Sonar Qube Server') {
+        //                     sh "sonar-scanner -Dsonar.host.url=\$SONAR_HOST_URL -Dsonar.login=\$SONAR_AUTH_TOKEN -Dsonar.branch=${branchName} -Dsonar.projectVersion=${projectVersion}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+
+        stage ('Build') {
+            steps {
+                script{
+                  sh '''
+                  #!/bin/bash -xe
+                  #--novoapp-web
+                    aws s3 cp s3://belcorp-codedeploy/NOVOAPP/${ENVIRONMENT}/web/web-environment.qa.ts app/src/environments/environment.qa.ts --region ${AWS_REGION}
+                  '''
+                }
+                script {
+                    def image = docker.build('novoapp/node-builder', './ci')
+                    image.inside("-u 0") {
+                        dir("app") {
+                            sh "npm install"
+                            sh "npm run build"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage ('Create Image') {
+            steps {
+                script {
+                    def imageTag = "${IMAGE_TAG}"
+                    def imageName = "${IMAGE_NAME}:${imageTag}"
+                    def repositoryName = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/${imageName}"
+                    sh "\$(aws ecr get-login --no-include-email --region ${AWS_REGION})"
+                    sh "docker build -t ${imageName} ."
+                    sh "docker tag ${imageName} ${repositoryName}"
+                }
+            }
+        }
+
+        stage ('Push Image') {
+            steps {
+                script {
+                    def imageTag = "${IMAGE_TAG}"
+                    def imageName = "${IMAGE_NAME}:${imageTag}"
+                    def repositoryName = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/${imageName}"
+                    sh "docker push ${repositoryName}"
+                }
+            }
+        }
+
+        stage ('Deploy') {
+            steps {
+                script {
+                def imageTag = "${IMAGE_TAG}"
+                def imageName = "${IMAGE_NAME}:${imageTag}"
+                sh  "                                                                     \
+                sed -e 's;%REPO%;${imageName};g'\
+                    -e 's;%ENVIRONMENT%;${ENVIRONMENT};g'\
+                        aws/task-definition.json >\
+                        aws/task-definition-${imageTag}.json\
+                "
+
+                sh "\$(aws ecr get-login --no-include-email --region ${AWS_REGION})"
+                def imageAwsCli = docker.image("${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops/aws-cli:1.16")
+
+                imageAwsCli.inside('-u 0') {
+                  TASK_DEFINITION = sh (returnStdout: true, script:"                                                                     \
+                  aws ecs register-task-definition --region us-east-1 --family td-novoapp-web-${ENVIRONMENT}                \
+                                                      --cli-input-json file://aws/task-definition-${imageTag}.json        \
+                  ")
+                }
+
+
+                TASK_DEFINITION_OBJECT = jsonParse(TASK_DEFINITION)
+
+                def content = "version: 0.0 \
+                \nResources: \
+                \n  - TargetService: \
+                \n      Type: AWS::ECS::Service \
+                \n      Properties: \
+                \n        TaskDefinition: \"${TASK_DEFINITION_OBJECT.taskDefinition.taskDefinitionArn}\" \
+                \n        LoadBalancerInfo: \
+                \n          ContainerName: \"web\" \
+                \n          ContainerPort: 80"
+
+                DEPLOYMENT_ID = sh (returnStdout: true, script: "aws deploy create-deployment --application-name AppECS-ecs-novoapp-microservicios-${ENVIRONMENT}-novoapp-web-${ENVIRONMENT} --deployment-group-name DgpECS-ecs-novoapp-microservicios-${ENVIRONMENT}-novoapp-web-${ENVIRONMENT} --revision \"revisionType='String',string={content='${content}'\"}  --region us-east-1").trim()
+                DEPLOYMENT_OBJECT = jsonParse(DEPLOYMENT_ID)
+                echo "Deployment-object is => ${DEPLOYMENT_ID}"
+                echo "Deployment-Id is => ${DEPLOYMENT_OBJECT.deploymentId}"
+                }
+                timeout(time: 5, unit: 'MINUTES'){
+                    awaitDeploymentCompletion("${DEPLOYMENT_OBJECT.deploymentId}")
+                }
+            }
+
+        }
+
+    }
+
+    post {
+        always {
+            notifyBuildDevOps(currentBuild.result)
+            notifyBuild(currentBuild.result)
+            cleanWs()
+        }
+        unstable {
+            echo 'This will run only if the run was marked as unstable'
+        }
+    }
+}
+
+def getEnvironment(){
+    if(isDevelop())
+      return "dev"
+
+    if(isRelease())
+      return "qas"
+
+    if(isMaster())
+      return "prd"
+
+    return "dev"
+}
+
+def isMaster() {
+    return env.BRANCH_NAME == "master"
+}
+
+def isRelease() {
+    return env.BRANCH_NAME ==~ '^release\\/[\\w\\d\\.]*$'
+}
+
+def isDevelop() {
+    return env.BRANCH_NAME == "develop"
+}
+
+def getShortCommitId() {
+    def gitCommit = env.GIT_COMMIT
+    def shortGitCommit = "${gitCommit[0..6]}"
+    return shortGitCommit
+}
+
+def notifyBuild(String buildStatus = 'STARTED') {
+    // default build status in case is not passed as parameter
+    buildStatus = buildStatus ?: 'SUCCESS'
+
+    // variables and constants
+    def colorName = 'RED'
+    def colorCode = '#FF0000'
+    def from = 'jenkins@belcorp.biz'
+    def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+    def url = "https://devops.belcorp.biz/job/${env.BUILD_ID}?name=${env.JOB_NAME}"
+    def summary = "${subject} (${url})"
+    def details = "<p>${buildStatus}: Job <a href='${url}}]</a></p>"
+
+    // override default values based on build status
+    if (buildStatus == 'STARTED') {
+        color = 'YELLOW'
+        colorCode = '#FFFF00'
+    } else if (buildStatus == 'SUCCESS') {
+        color = 'GREEN'
+        colorCode = '#00FF00'
+    } else {
+        color = 'RED'
+        colorCode = '#FF0000'
+    }
+
+    // send notifications
+    slackSend (
+        color: colorCode,
+        message: summary,
+        channel: '#jenkins',
+        teamDomain: 'appvengerse',
+        tokenCredentialId: 'slack_novoapp_token')
+}
+
+def notifyBuildDevOps(String buildStatus = 'STARTED') {
+    buildStatus = buildStatus ?: 'SUCCESS'
+    String buildPhase = (buildStatus == 'STARTED') ? 'STARTED' : 'FINALIZED'
+    commit = (buildStatus == 'STARTED') ? 'null' : sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'")
+
+    sh """curl -H "Content-Type: application/json" -X POST -d '{
+        "name": "${env.JOB_NAME}",
+        "type": "pipeline",
+        "build": {
+            "phase": "${buildPhase}",
+            "status": "${buildStatus}",
+            "number": ${env.BUILD_ID},
+            "scm": {
+                "commit": "${commit}"
+            },
+            "artifacts": {}
+        }
+    }' https://devops.belcorp.biz/gestionar_despliegues_qa"""
+}
