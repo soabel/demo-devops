@@ -12,6 +12,6 @@ spec:
       containers: 
       - name: app-ms-catalog
         image: app-ms-catalog:latest
+        imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 8081
-      imagePullPolicy: IfNotPresent
+        - containerPort: 8081      
