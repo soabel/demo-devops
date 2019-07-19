@@ -14,4 +14,4 @@ spec:
         image: soabel/app-ms-catalog:v1
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 8081      
+        - containerPort: 80      
