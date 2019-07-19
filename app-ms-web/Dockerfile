@@ -1,4 +1,4 @@
-FROM node:10-alpine as builder
+FROM node:11-alpine as builder
 
 # SET ENVIRONMENT VARIABLES
 ENV ENVIRONMENT=prod
