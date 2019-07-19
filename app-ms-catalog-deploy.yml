@@ -1,0 +1,16 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: app-ms-catalog-deployment
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: app-ms-catalog
+    spec:
+      containers: 
+      - name: app-ms-catalog
+        image: app-ms-catalog:v1
+        ports:
+        - containerPort: 8081
